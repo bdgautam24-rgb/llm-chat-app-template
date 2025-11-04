@@ -13,7 +13,7 @@ const typingIndicatorWrapper = document.getElementById("typing-indicator-wrapper
 
 // Constants
 const USER_AVATAR = "👤";
-const ASSISTANT_AVATAR = "🤖";
+const ASSISTANT_AVATAR = "🔱";
 const TYPING_SPEED = 20; // milliseconds per character for typing effect
 
 // Chat state
@@ -177,7 +177,8 @@ async function sendMessage() {
     // Add completed response to chat history
     chatHistory.push({ role: "assistant", content: responseText });
 
-    // The indicator is hidden before streaming starts, so no need to hide it her  } catch (error) {
+    // The indicator is hidden before streaming starts, so no need to hide it here.
+  } catch (error) {
     console.error("Error:", error);
     addMessageToChat(
       "assistant",
@@ -185,7 +186,8 @@ async function sendMessage() {
     );
     // Ensure indicator is hidden on error
     typingIndicatorWrapper.classList.remove("visible");
-  } finally {able input
+  } finally {
+    // Re-enable input
     isProcessing = false;
     userInput.disabled = false;
     sendButton.disabled = false;
