@@ -179,55 +179,53 @@
         cursor: not-allowed;
       }
 
-      .typing-indicator-wrapper {
-        display: none;
-        padding: 0.75rem 1rem;
-        margin-bottom: 1rem;
-        align-items: center;
-      }
-
-      .typing-indicator-wrapper.visible {
+      /* New Typing Indicator Bubble Style */
+      .typing-indicator-bubble {
         display: flex;
-        animation: fadeIn 0.3s ease-in;
+        align-items: flex-end;
+        justify-content: center;
+        width: 60px; /* Small bubble size */
+        height: 40px;
+        background-color: var(--assistant-msg-bg);
+        border-radius: 8px;
+        border-bottom-left-radius: 0;
+        padding: 0.5rem;
       }
 
-      .typing-indicator {
-        font-style: italic;
-        color: var(--text-light);
-        margin-left: 0.5rem;
-        line-height: var(--avatar-size);
+      .typing-dot {
+        width: 8px;
+        height: 8px;
+        margin: 0 2px;
+        background-color: var(--text-light);
+        border-radius: 50%;
+        animation: bounce 1.4s infinite ease-in-out;
       }
 
-      /* Typing animation dots */
-      .typing-indicator::after {
-        content: "...";
-        animation: typingDots 1.5s steps(4, end) infinite;
+      .typing-dot:nth-child(1) {
+        animation-delay: -0.32s;
       }
 
-      @keyframes typingDots {
+      .typing-dot:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+
+      @keyframes bounce {
         0%,
-        20% {
-          content: "...";
-        }
-        40% {
-          content: "...";
-        }
-        60% {
-          content: "...";
-        }
         80%,
         100% {
-          content: "...";
+          transform: scale(0);
+        }
+        40% {
+          transform: scale(1);
         }
       }
 
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
+      .typing-message-wrapper {
+        display: none; /* Hidden by default */
+      }
+
+      .typing-message-wrapper.visible {
+        display: flex;
       }
 
       footer {
@@ -272,7 +270,7 @@
   </head>
   <body>
     <header>
-      <div class="agent-icon">🧘🏻</div>
+      <div class="agent-icon">🕉️</div>
       <h1>সনাতন চ্যাটবট</h1>
       <p>ঐতিহাসিক ও যৌক্তিক বিষয়ে আলোচনা</p>
     </header>
@@ -281,7 +279,7 @@
       <div id="chat-messages" class="chat-messages">
         <!-- Initial Assistant Message -->
         <div class="message-wrapper assistant-message-wrapper">
-          <div class="avatar assistant-avatar">🧘🏻</div>
+          <div class="avatar assistant-avatar">🕉️</div>
           <div class="message assistant-message">
             <p>
               নমস্কার! আমি গৌতম কুমার দ্বারা তৈরি একটি চ্যাটবট। আমি আপনাকে কীভাবে সাহায্য করতে পারি?
@@ -290,9 +288,14 @@
         </div>
       </div>
 
-      <div class="typing-indicator-wrapper" id="typing-indicator-wrapper">
-        <div class="avatar assistant-avatar">🧘🏻</div>
-        <div class="typing-indicator">চিন্তা করছি</div>
+      <!-- New Typing Indicator Bubble -->
+      <div class="message-wrapper assistant-message-wrapper typing-message-wrapper" id="typing-indicator-wrapper">
+        <div class="avatar assistant-avatar">🕉️</div>
+        <div class="typing-indicator-bubble">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
       </div>
 
       <div class="message-input">
