@@ -13,7 +13,7 @@ const typingIndicatorWrapper = document.getElementById("typing-indicator-wrapper
 
 // Constants
 const USER_AVATAR = "👤";
-const ASSISTANT_AVATAR = "🧘🏻";
+const ASSISTANT_AVATAR = "🕉️";
 const TYPING_SPEED = 20; // milliseconds per character for typing effect
 
 // Chat state
@@ -63,8 +63,13 @@ async function sendMessage() {
 
   // Show typing indicator
   typingIndicatorWrapper.classList.add("visible");
+  // Scroll to bottom to show the indicator
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 
   try {
+    // Hide typing indicator before starting to stream
+    typingIndicatorWrapper.classList.remove("visible");
+
     // Create new assistant message wrapper and elements
     const assistantWrapperEl = document.createElement("div");
     assistantWrapperEl.className = "message-wrapper assistant-message-wrapper";
@@ -172,17 +177,15 @@ async function sendMessage() {
     // Add completed response to chat history
     chatHistory.push({ role: "assistant", content: responseText });
 
-    // Hide typing indicator
-    typingIndicatorWrapper.classList.remove("visible");
-  } catch (error) {
+    // The indicator is hidden before streaming starts, so no need to hide it her  } catch (error) {
     console.error("Error:", error);
     addMessageToChat(
       "assistant",
       "ক্ষমা করুন, আপনার অনুরোধ প্রক্রিয়া করতে একটি ত্রুটি ঘটেছে।"
     );
+    // Ensure indicator is hidden on error
     typingIndicatorWrapper.classList.remove("visible");
-  } finally {
-    // Re-enable input
+  } finally {able input
     isProcessing = false;
     userInput.disabled = false;
     sendButton.disabled = false;
