@@ -31,7 +31,7 @@
         color: var(--text-color);
         max-width: 800px;
         margin: 0 auto;
-        padding: 0; /* Remove body padding for full-screen mobile experience */
+        padding: 0;
         height: 100vh;
         display: flex;
         flex-direction: column;
@@ -56,20 +56,19 @@
         font-size: 1.5rem;
         line-height: 40px;
         margin-bottom: 0.5rem;
-        /* Placeholder for a real icon/image */
       }
 
       h1 {
-        font-size: 1.2rem; /* Smaller font for mobile */
+        font-size: 1.2rem;
         color: var(--primary-color);
       }
 
       .chat-container {
         display: flex;
         flex-direction: column;
-        flex-grow: 1; /* Take up remaining space */
+        flex-grow: 1;
         overflow: hidden;
-        border: none; /* Remove border for full-screen mobile experience */
+        border: none;
         border-radius: 0;
       }
 
@@ -80,7 +79,6 @@
         background-color: var(--light-bg);
       }
 
-      /* Message Wrapper for Avatar and Message Bubble */
       .message-wrapper {
         display: flex;
         margin-bottom: 1rem;
@@ -116,15 +114,15 @@
       .assistant-avatar {
         order: 1;
         margin-right: 0.5rem;
-        background-color: #3b82f6; /* A different color for the assistant */
+        background-color: #3b82f6;
       }
 
       .message {
         padding: 0.75rem;
         border-radius: 8px;
-        max-width: 75%; /* Slightly smaller max-width for mobile */
+        max-width: 75%;
         word-wrap: break-word;
-        min-width: 100px; /* Prevent tiny bubbles */
+        min-width: 100px;
       }
 
       .user-message {
@@ -155,7 +153,7 @@
         font-family: inherit;
         resize: none;
         min-height: 44px;
-        max-height: 150px; /* Limit textarea growth */
+        max-height: 150px;
       }
 
       #send-button {
@@ -179,12 +177,12 @@
         cursor: not-allowed;
       }
 
-      /* New Typing Indicator Bubble Style */
+      /* Typing Indicator Styles */
       .typing-indicator-bubble {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         justify-content: center;
-        width: 60px; /* Small bubble size */
+        width: 60px;
         height: 40px;
         background-color: var(--assistant-msg-bg);
         border-radius: 8px;
@@ -196,53 +194,55 @@
         width: 8px;
         height: 8px;
         margin: 0 2px;
-        background-color: var(--text-light);
+        background-color: #4b5563; /* Darker gray for better visibility */
         border-radius: 50%;
         animation: bounce 1.4s infinite ease-in-out;
       }
 
-      .typing-dot:nth-child(1) {
-        animation-delay: -0.32s;
-      }
-
-      .typing-dot:nth-child(2) {
-        animation-delay: -0.16s;
-      }
+      .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+      .typing-dot:nth-child(2) { animation-delay: -0.16s; }
 
       @keyframes bounce {
-        0%,
-        80%,
-        100% {
+        0%, 80%, 100% {
           transform: scale(0);
+          opacity: 0.5;
         }
         40% {
           transform: scale(1);
+          opacity: 1;
         }
       }
 
       .typing-message-wrapper {
-        display: none; /* Hidden by default */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s;
+        height: 0;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
       }
 
       .typing-message-wrapper.visible {
-        display: flex;
+        opacity: 1;
+        visibility: visible;
+        height: auto;
+        margin-bottom: 1rem;
       }
 
       footer {
-        display: none; /* Hide footer on mobile for better screen usage */
+        display: none;
       }
 
-      /* Responsive adjustments for message max-width */
       @media (max-width: 480px) {
         .message {
           max-width: 85%;
         }
         #user-input {
-          font-size: 16px; /* Prevent zoom on iOS */
+          font-size: 16px;
         }
       }
 
-      /* Media Query for Desktop/Larger Screens */
       @media (min-width: 600px) {
         body {
           padding: 1rem;
@@ -286,15 +286,15 @@
             </p>
           </div>
         </div>
-      </div>
 
-      <!-- New Typing Indicator Bubble -->
-      <div class="message-wrapper assistant-message-wrapper typing-message-wrapper" id="typing-indicator-wrapper">
-        <div class="avatar assistant-avatar">🔱</div>
-        <div class="typing-indicator-bubble">
-          <div class="typing-dot"></div>
-          <div class="typing-dot"></div>
-          <div class="typing-dot"></div>
+        <!-- Typing Indicator (inside chat-messages for smooth scrolling) -->
+        <div class="message-wrapper assistant-message-wrapper typing-message-wrapper" id="typing-indicator-wrapper">
+          <div class="avatar assistant-avatar">🔱</div>
+          <div class="typing-indicator-bubble">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
         </div>
       </div>
 
@@ -309,7 +309,6 @@
       </div>
     </div>
 
-    <!-- Chat app script -->
     <script src="chat.js"></script>
   </body>
 </html>
