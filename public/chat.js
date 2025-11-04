@@ -14,19 +14,21 @@ const typingIndicatorWrapper = document.getElementById("typing-indicator-wrapper
 // Constants
 const USER_AVATAR = "👤";
 const ASSISTANT_AVATAR = "🔱";
-const TYPING_SPEED = 20; // milliseconds per character for typing effect
+const TYPING_SPEED = 20; // ms per character for typing effect
 
 // Chat state
-let chatHistory = []; // Initial message is now in HTML
+let chatHistory = [
+  { role: "assistant", content: "নমস্কার! আমি গৌতম কুমার দ্বারা তৈরি একটি চ্যাটবট। আমি আপনাকে কীভাবে সাহায্য করতে পারি?" }
+];
 let isProcessing = false;
 
-// Auto-resize textarea as user types
+// Auto-resize textarea
 userInput.addEventListener("input", function () {
   this.style.height = "auto";
   this.style.height = this.scrollHeight + "px";
 });
 
-// Send message on Enter (without Shift)
+// Send on Enter (no Shift)
 userInput.addEventListener("keydown", function (e) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -34,43 +36,34 @@ userInput.addEventListener("keydown", function (e) {
   }
 });
 
-// Send button click handler
+// Send button
 sendButton.addEventListener("click", sendMessage);
 
 /**
- * Sends a message to the chat API and processes the response
+ * Send message to API and handle streaming response
  */
 async function sendMessage() {
   const message = userInput.value.trim();
-
-  // Don't send empty messages
   if (message === "" || isProcessing) return;
 
-  // Disable input while processing
   isProcessing = true;
   userInput.disabled = true;
   sendButton.disabled = true;
 
-  // Add user message to chat
+  // Add user message
   addMessageToChat("user", message);
-
-  // Clear input
   userInput.value = "";
   userInput.style.height = "auto";
 
-  // Add message to history
+  // Update history
   chatHistory.push({ role: "user", content: message });
 
   // Show typing indicator
   typingIndicatorWrapper.classList.add("visible");
-  // Scroll to bottom to show the indicator
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  scrollToBottom();
 
   try {
-    // Hide typing indicator before starting to stream
-    typingIndicatorWrapper.classList.remove("visible");
-
-    // Create new assistant message wrapper and elements
+    // Create assistant message placeholder
     const assistantWrapperEl = document.createElement("div");
     assistantWrapperEl.className = "message-wrapper assistant-message-wrapper";
 
@@ -85,109 +78,71 @@ async function sendMessage() {
     assistantWrapperEl.appendChild(avatarEl);
     assistantWrapperEl.appendChild(assistantMessageEl);
     chatMessages.appendChild(assistantWrapperEl);
+    scrollToBottom();
 
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Hide typing indicator now that streaming starts
+    typingIndicatorWrapper.classList.remove("visible");
 
-    // Send request to API
+    // Fetch response
     const response = await fetch("/api/chat", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: chatHistory,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: chatHistory }),
     });
 
-    // Handle errors
-    if (!response.ok) {
-      throw new Error("Failed to get response");
-    }
+    if (!response.ok) throw new Error("Failed to get response");
 
-    // Process streaming response
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let responseText = "";
     let displayedText = "";
     let typingTimeout = null;
-
     const paragraphEl = assistantMessageEl.querySelector("p");
 
-    // Function to update displayed text with typing effect
-    const updateDisplayedText = () => {
+    const updateTyping = () => {
       if (displayedText.length < responseText.length) {
-        displayedText += responseText[displayedText.length];
-        paragraphEl.textContent = displayedText;
-
-        // Scroll to bottom
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-
-        // Schedule next character
-        typingTimeout = setTimeout(updateDisplayedText, TYPING_SPEED);
+        displayedText += responseText.charAt(displayedText.length);
+        paragraphEl.innerHTML = escapeHtml(displayedText).replace(/\n/g, "<br>");
+        scrollToBottom();
+        typingTimeout = setTimeout(updateTyping, TYPING_SPEED);
       }
     };
 
-    // Process streaming chunks
     while (true) {
       const { done, value } = await reader.read();
+      if (done) break;
 
-      if (done) {
-        break;
-      }
-
-      // Decode chunk
       const chunk = decoder.decode(value, { stream: true });
-
-      // Process SSE format
       const lines = chunk.split("\n");
-      for (const line of lines) {
-        if (line.trim() === "") continue;
 
+      for (const line of lines) {
+        if (!line.trim()) continue;
         try {
           const jsonData = JSON.parse(line);
           if (jsonData.response) {
-            // Append new content to response buffer
             responseText += jsonData.response;
-
-            // If typing effect is not running, start it
-            if (typingTimeout === null) {
-              updateDisplayedText();
-            }
+            if (!typingTimeout) updateTyping();
           }
         } catch (e) {
-          // Silently ignore parsing errors for empty or malformed lines
-          if (line.trim() !== "") {
-            console.debug("Non-JSON line received:", line);
-          }
+          if (line.trim()) console.debug("Non-JSON:", line);
         }
       }
     }
 
-    // Ensure all text is displayed
-    if (typingTimeout !== null) {
-      clearTimeout(typingTimeout);
-    }
+    // Finalize typing
+    clearTimeout(typingTimeout);
     displayedText = responseText;
-    paragraphEl.textContent = displayedText;
+    paragraphEl.innerHTML = escapeHtml(displayedText).replace(/\n/g, "<br>");
+    scrollToBottom();
 
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-
-    // Add completed response to chat history
+    // Update history
     chatHistory.push({ role: "assistant", content: responseText });
 
-    // The indicator is hidden before streaming starts, so no need to hide it here.
   } catch (error) {
     console.error("Error:", error);
-    addMessageToChat(
-      "assistant",
-      "ক্ষমা করুন, আপনার অনুরোধ প্রক্রিয়া করতে একটি ত্রুটি ঘটেছে।"
-    );
-    // Ensure indicator is hidden on error
+    addMessageToChat("assistant", "ক্ষমা করুন, একটি ত্রুটি ঘটেছে। দয়া করে আবার চেষ্টা করুন।");
     typingIndicatorWrapper.classList.remove("visible");
   } finally {
-    // Re-enable input
     isProcessing = false;
     userInput.disabled = false;
     sendButton.disabled = false;
@@ -196,7 +151,7 @@ async function sendMessage() {
 }
 
 /**
- * Helper function to add message to chat
+ * Add message to chat UI
  */
 function addMessageToChat(role, content) {
   const isUser = role === "user";
@@ -214,10 +169,8 @@ function addMessageToChat(role, content) {
 
   const messageEl = document.createElement("div");
   messageEl.className = `message ${messageClass}`;
-  messageEl.innerHTML = `<p>${escapeHtml(content)}</p>`;
+  messageEl.innerHTML = `<p>${escapeHtml(content).replace(/\n/g, "<br>")}</p>`;
 
-  // User message: [Message] [Avatar]
-  // Assistant message: [Avatar] [Message]
   if (isUser) {
     wrapperEl.appendChild(messageEl);
     wrapperEl.appendChild(avatarEl);
@@ -227,21 +180,24 @@ function addMessageToChat(role, content) {
   }
 
   chatMessages.appendChild(wrapperEl);
+  scrollToBottom();
+}
 
-  // Scroll to bottom
+/**
+ * Scroll to bottom
+ */
+function scrollToBottom() {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 /**
- * Escape HTML special characters to prevent XSS
+ * Escape HTML
  */
 function escapeHtml(text) {
-  const map = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  };
-  return text.replace(/[&<>"']/g, (char) => map[char]);
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
 }
+
+// Initial scroll
+scrollToBottom();
