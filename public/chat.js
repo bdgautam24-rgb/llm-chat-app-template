@@ -13,7 +13,7 @@ const typingIndicatorWrapper = document.getElementById("typing-indicator-wrapper
 
 // Constants
 const USER_AVATAR = "👤";
-const ASSISTANT_AVATAR = "🕉️";
+const ASSISTANT_AVATAR = "🤖";
 const TYPING_SPEED = 20; // milliseconds per character for typing effect
 
 // Chat state
