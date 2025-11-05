@@ -46,7 +46,11 @@ userInput.addEventListener("keydown", e => {
 });
 sendButton.addEventListener("click", sendMessage);
 
-// === Scroll to Bottom ===
+// === Scroll to Element/Bottom ===
+function scrollToElement(element) {
+  element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
 function scrollToBottom() {
   chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: "smooth" });
 }
@@ -69,7 +73,6 @@ function addMessage(role, content, timestamp = new Date()) {
   messageDiv.style.marginRight = isUser ? "12px" : "auto";
 
   const p = document.createElement("p");
-  // Marked.js এবং DOMPurify ব্যবহার করে Markdown রেন্ডার করা হচ্ছে
   p.innerHTML = DOMPurify.sanitize(marked.parse(content));
   messageDiv.appendChild(p);
 
@@ -84,8 +87,6 @@ function addMessage(role, content, timestamp = new Date()) {
     copyBtn.innerHTML = "📋";
     copyBtn.setAttribute('aria-label', 'কপি করুন');
     copyBtn.onclick = () => {
-      // Note: The 'content' here will be the initial content (empty for streaming)
-      // The click handler is updated later in sendMessage for the final content.
       navigator.clipboard.writeText(content).then(() => {
         copyBtn.innerHTML = "✅";
         setTimeout(() => { copyBtn.innerHTML = "📋"; }, 2000);
@@ -98,7 +99,7 @@ function addMessage(role, content, timestamp = new Date()) {
   wrapper.appendChild(messageDiv);
   chatMessages.appendChild(wrapper);
   scrollToBottom();
-  return messageDiv; // Return the message element for later updates
+  return messageDiv;
 }
 
 function renderHistory() {
@@ -147,6 +148,8 @@ async function sendMessage() {
     userInput.style.height = "auto";
     showTypingIndicator();
 
+    let assistantMessageDiv; // Define it here to access in catch/finally
+
     try {
         const res = await fetch("/api/chat", {
             method: "POST",
@@ -159,8 +162,7 @@ async function sendMessage() {
         }
 
         removeTypingIndicator();
-        // সহকারীর উত্তরের জন্য একটি নতুন 메시েজ এলিমেন্ট তৈরি করুন
-        const assistantMessageDiv = addMessage("assistant", ""); 
+        assistantMessageDiv = addMessage("assistant", ""); 
         const assistantContentP = assistantMessageDiv.querySelector("p");
         
         const reader = res.body.getReader();
@@ -174,7 +176,7 @@ async function sendMessage() {
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split("\n");
-            buffer = lines.pop(); // শেষ অসম্পূর্ণ লাইনটি বাফারে রাখুন
+            buffer = lines.pop();
 
             for (const line of lines) {
                 if (line.trim().startsWith("data:")) {
@@ -184,9 +186,8 @@ async function sendMessage() {
                             const data = JSON.parse(jsonStr);
                             if (data.response) {
                                 fullResponse += data.response;
-                                // UI-তে ধীরে ধীরে উত্তর প্রদর্শন করুন
                                 assistantContentP.innerHTML = DOMPurify.sanitize(marked.parse(fullResponse));
-                                scrollToBottom();
+                                scrollToElement(assistantMessageDiv);
                             }
                         }
                     } catch (e) {
@@ -196,7 +197,6 @@ async function sendMessage() {
             }
         }
 
-        // স্ট্রিমিং শেষ হওয়ার পর কপি বাটনের জন্য সঠিক কনটেন্ট আপডেট করুন
         const finalCopyBtn = assistantMessageDiv.querySelector('button[aria-label="কপি করুন"]');
         if (finalCopyBtn) {
             finalCopyBtn.onclick = () => {
@@ -212,13 +212,13 @@ async function sendMessage() {
             localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
             localStorage.setItem("chatTimestamp", Date.now().toString());
         } else {
-            // যদি কোনো উত্তর না পাওয়া যায়, তাহলে ত্রুটি দেখান
             throw new Error("সার্ভার থেকে কোনো উত্তর পাওয়া যায়নি।");
         }
 
     } catch (err) {
         console.error("API কল করতে সমস্যা হয়েছে:", err);
         removeTypingIndicator();
+        if (assistantMessageDiv) assistantMessageDiv.remove(); // ত্রুটি হলে খালি মেসেজ বক্স মুছে ফেলুন
         addMessage("assistant", `<em>ত্রুটি: ${err.message || 'সার্ভারের সাথে সংযোগ বিচ্ছিন্ন।'} আবার চেষ্টা করুন।</em>`);
     } finally {
         setProcessingState(false);
@@ -229,7 +229,5 @@ function setProcessingState(state) {
   isProcessing = state;
   userInput.disabled = state;
   sendButton.disabled = state;
-  if (!state) {
-    userInput.focus();
-  }
+  // ইনপুট ফোকাস করার কোডটি এখান থেকে সরিয়ে দেওয়া হয়েছে
 }
