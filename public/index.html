@@ -1,100 +1,307 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>সনাতন চ্যাটবট</title>
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#007BFF', // উজ্জ্বল নীল রঙ
-            'primary-hover': '#0056b3',
-            'user-bg': '#E6F2FF',
-            'assistant-bg': '#F0F2F5',
-            'body-bg': '#FFFFFF',
-            'border-color': '#DEE2E6',
-          },
-        },
-      },
-    }
-  </script>
-
-  <!-- Cloudflare CDN: Marked.js, DOMPurify -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/14.1.2/marked.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
-
-  <!-- কাস্টম স্টাইল -->
-  <style>
-    /* স্ক্রলবারের জন্য স্টাইল */
-    #chat-messages::-webkit-scrollbar {
-      width: 6px;
-    }
-    #chat-messages::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-    #chat-messages::-webkit-scrollbar-thumb {
-      background: #ccc;
-      border-radius: 3px;
-    }
-    #chat-messages::-webkit-scrollbar-thumb:hover {
-      background: #aaa;
-    }
-    /* ফোকাস করার সময় টেক্সট-এরিয়ার বর্ডার পরিবর্তন */
-    #user-input:focus {
-      border-color: #007BFF;
-      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25 );
-      outline: none;
-    } 
-    .animate-bounce {
-    animation: bounce 1.4s infinite ease-in-out both;
-}
-.animate-bounce:nth-child(1) {
-    animation-delay: -0.32s;
-}
-.animate-bounce:nth-child(2) {
-    animation-delay: -0.16s;
-}
-@keyframes bounce {
-    0%, 80%, 100% {
-        transform: scale(0);
-    }
-    40% {
-        transform: scale(1.0);
-    }
-}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>চ্যাটবট</title>
+    
+    <!-- প্রয়োজনীয় লাইব্রেরি -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    
+    <style>
+        /* কাস্টম স্টাইল এবং অ্যানিমেশন */
+        body {
+            font-family: 'Noto Sans Bengali', sans-serif; /* বাংলা ফন্টের জন্য */
+        }
+        .bg-user-bg { background-color: #DCF8C6; }
+        .bg-assistant-bg { background-color: #FFFFFF; border: 1px solid #f0f0f0; }
+        #chat-messages {
+            height: calc(100vh - 140px );
+        }
+        
+        /* টাইপিং ইন্ডিকেটরের জন্য বাউন্স অ্যানিমেশন */
+        .dot-bounce {
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .dot-bounce:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        .dot-bounce:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1.0);
+            }
+        }
+    </style>
 </head>
-<body class="bg-body-bg text-gray-900 font-sans min-h-screen flex flex-col">
+<body class="bg-gray-100 flex flex-col h-screen">
 
-  <header class="text-center py-4 border-b border-border-color flex-shrink-0">
-    <div class="text-4xl mb-2">🔱</div>
-    <h1 class="text-xl font-bold text-primary">সনাতন চ্যাটবট✓</h1>
-    <p class="text-sm text-gray-600">ঐতিহাসিক ও যৌক্তিক আলোচনা</p>
-  </header>
-
-  <main class="flex-1 overflow-hidden flex flex-col">
-    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4" role="log" aria-live="polite" aria-busy="false">
-      <!-- প্রাথমিক বার্তা -->
-      <div class="clearfix">
-        <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0 float-left">🔱</div>
-        <div class="max-w-[75%] bg-assistant-bg p-3 rounded-lg rounded-bl-none ml-12 float-left">
-          <p>নমস্কার! আমি গৌতম কুমার দ্বারা তৈরি একটি চ্যাটবট। আমি আপনাকে কীভাবে সাহায্য করতে পারি?</p>
-          <div class="text-xs text-gray-500 text-right mt-1">এখন</div>
+    <div id="chat-container" class="flex-grow flex flex-col max-w-3xl mx-auto w-full">
+        <!-- চ্যাট বার্তা প্রদর্শনের স্থান -->
+        <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto bg-white rounded-t-lg shadow-inner">
+            <!-- চ্যাট বার্তা এখানে জাভাস্ক্রিপ্ট দ্বারা যুক্ত হবে -->
         </div>
-      </div>
+        
+        <!-- ব্যবহারকারীর ইনপুট অংশ -->
+        <div class="p-4 bg-gray-200 rounded-b-lg shadow-md">
+            <div class="flex items-center bg-white rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500">
+                <textarea id="user-input" class="flex-grow p-3 border-none rounded-lg resize-none focus:outline-none" placeholder="এখানে আপনার প্রশ্ন লিখুন..." rows="1"></textarea>
+                <button id="send-button" class="ml-2 mr-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                </button>
+            </div>
+        </div>
     </div>
 
-    <footer class="p-4 border-t border-border-color bg-white flex items-end gap-2">
-      <textarea id="user-input" class="flex-1 p-3 border border-gray-300 rounded-lg resize-none min-h-[48px] max-h-[150px] font-sans text-base bg-transparent transition-all" placeholder="আপনার বার্তা লিখুন..." rows="1"></textarea>
-      <button id="send-button" class="px-6 py-3 bg-primary text-white rounded-lg font-bold transition-colors duration-200 hover:bg-primary-hover disabled:bg-gray-400 disabled:cursor-not-allowed flex-shrink-0">প্রেরণ</button>
-    </footer>
-  </main>
+<script>
+    // === DOM Elements ===
+    const chatMessages = document.getElementById("chat-messages" );
+    const userInput = document.getElementById("user-input");
+    const sendButton = document.getElementById("send-button");
 
-  <script src="/chat.js?v3"></script>
+    // === State ===
+    let chatHistory = [
+      { role: "assistant", content: "নমস্কার! আমি গৌতম কুমার দ্বারা তৈরি একটি চ্যাটবট। আমি আপনাকে কীভাবে সাহায্য করতে পারি?" }
+    ];
+    let isProcessing = false;
+
+    // === Load History on Page Load ===
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedHistory = localStorage.getItem("chatHistory");
+      const savedTimestamp = parseInt(localStorage.getItem("chatTimestamp"), 10);
+      const currentTime = Date.now();
+      const expirationTime = 30 * 60 * 1000; // ৩০ মিনিট
+
+      if (savedHistory && savedTimestamp && (currentTime - savedTimestamp < expirationTime)) {
+        try {
+          chatHistory = JSON.parse(savedHistory);
+        } catch (e) {
+          console.error("চ্যাট হিস্ট্রি পার্স করতে সমস্যা হয়েছে:", e);
+          localStorage.clear();
+        }
+      } else {
+        localStorage.removeItem("chatHistory");
+        localStorage.removeItem("chatTimestamp");
+      }
+      renderHistory();
+      userInput.focus();
+    });
+
+    // === Event Listeners ===
+    userInput.addEventListener("input", function () {
+      this.style.height = "auto";
+      this.style.height = (this.scrollHeight) + "px";
+    });
+
+    userInput.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    sendButton.addEventListener("click", sendMessage);
+
+    // === UI Helper Functions ===
+    function scrollToElement(element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+
+    function scrollToBottom() {
+      chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: "smooth" });
+    }
+
+    function addMessage(role, content, timestamp = new Date()) {
+      const isUser = role === "user";
+      const wrapper = document.createElement("div");
+      wrapper.className = "clearfix mb-4";
+
+      const avatar = document.createElement("div");
+      avatar.className = `w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 ${isUser ? 'bg-green-500' : 'bg-blue-500'}`;
+      avatar.textContent = isUser ? "👤" : "🔱";
+      avatar.style.float = isUser ? "right" : "left";
+
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `inline-block max-w-[75%] p-3 rounded-lg relative group shadow ${isUser ? 'bg-user-bg rounded-br-none' : 'bg-assistant-bg rounded-bl-none'}`;
+      messageDiv.style.float = isUser ? "right" : "left";
+      messageDiv.style.marginLeft = isUser ? "auto" : "12px";
+      messageDiv.style.marginRight = isUser ? "12px" : "auto";
+
+      const p = document.createElement("p");
+      p.innerHTML = DOMPurify.sanitize(marked.parse(content));
+      messageDiv.appendChild(p);
+
+      const time = document.createElement("div");
+      time.className = "text-xs text-gray-400 text-right mt-1";
+      time.textContent = timestamp.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" });
+      messageDiv.appendChild(time);
+
+      if (role === "assistant") {
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "absolute top-1 right-2 bg-transparent border-none text-gray-400 text-lg cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity";
+        copyBtn.innerHTML = "📋";
+        copyBtn.setAttribute('aria-label', 'কপি করুন');
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(content).then(() => {
+            copyBtn.innerHTML = "✅";
+            setTimeout(() => { copyBtn.innerHTML = "📋"; }, 2000);
+          });
+        };
+        messageDiv.appendChild(copyBtn);
+      }
+
+      wrapper.appendChild(avatar);
+      wrapper.appendChild(messageDiv);
+      chatMessages.appendChild(wrapper);
+      scrollToBottom();
+      return messageDiv;
+    }
+
+    function renderHistory() {
+      chatMessages.innerHTML = "";
+      chatHistory.forEach(msg => {
+        if (msg.role !== "system") {
+          addMessage(msg.role, msg.content);
+        }
+      });
+      scrollToBottom();
+    }
+
+    function showTypingIndicator() {
+      const wrapper = document.createElement("div");
+      wrapper.id = "typing-indicator";
+      wrapper.className = "clearfix mb-4";
+      wrapper.innerHTML = `
+        <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0 float-left">🔱</div>
+        <div class="inline-block max-w-[75%] bg-assistant-bg p-4 rounded-lg rounded-bl-none ml-12 float-left shadow">
+          <div class="flex items-center space-x-2">
+            <div class="w-2 h-2 bg-gray-500 rounded-full dot-bounce"></div>
+            <div class="w-2 h-2 bg-gray-500 rounded-full dot-bounce"></div>
+            <div class="w-2 h-2 bg-gray-500 rounded-full dot-bounce"></div>
+          </div>
+        </div>
+      `;
+      chatMessages.appendChild(wrapper);
+      scrollToBottom();
+    }
+
+    function removeTypingIndicator() {
+      const indicator = document.getElementById("typing-indicator");
+      if (indicator) indicator.remove();
+    }
+
+    function setProcessingState(state) {
+      isProcessing = state;
+      userInput.disabled = state;
+      sendButton.disabled = state;
+      if (!state) {
+        userInput.focus();
+      }
+    }
+
+    // === Core Send Message Logic (Final Version) ===
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message || isProcessing) return;
+
+        setProcessingState(true);
+        addMessage("user", message);
+        chatHistory.push({ role: "user", content: message });
+        userInput.value = "";
+        userInput.style.height = "auto";
+        showTypingIndicator();
+
+        let assistantMessageDiv; 
+
+        try {
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messages: chatHistory }),
+            });
+
+            if (!res.ok) {
+                throw new Error(`সার্ভার ত্রুটি: ${res.status} ${res.statusText}`);
+            }
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let fullResponse = "";
+            let buffer = "";
+            let receivedData = false;
+
+            removeTypingIndicator();
+            assistantMessageDiv = addMessage("assistant", ""); 
+            const assistantContentP = assistantMessageDiv.querySelector("p");
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                receivedData = true;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (line.trim().startsWith("data:")) {
+                        try {
+                            const jsonStr = line.replace("data:", "").trim();
+                            if (jsonStr) {
+                                const data = JSON.parse(jsonStr);
+                                if (data.response) {
+                                    fullResponse += data.response;
+                                    assistantContentP.innerHTML = DOMPurify.sanitize(marked.parse(fullResponse));
+                                    scrollToElement(assistantMessageDiv);
+                                }
+                            }
+                        } catch (e) {
+                            console.error("JSON পার্সিং এ সমস্যা:", e, "লাইন:", line);
+                        }
+                    }
+                }
+            }
+
+            if (!receivedData && !fullResponse) {
+                throw new Error("সার্ভার একটি খালি উত্তর পাঠিয়েছে।");
+            }
+
+            const finalCopyBtn = assistantMessageDiv.querySelector('button[aria-label="কপি করুন"]');
+            if (finalCopyBtn) {
+                finalCopyBtn.onclick = () => {
+                    navigator.clipboard.writeText(fullResponse).then(() => {
+                        finalCopyBtn.innerHTML = "✅";
+                        setTimeout(() => { finalCopyBtn.innerHTML = "📋"; }, 2000);
+                    });
+                };
+            }
+
+            if (fullResponse) {
+                chatHistory.push({ role: "assistant", content: fullResponse });
+                localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+                localStorage.setItem("chatTimestamp", Date.now().toString());
+            }
+
+        } catch (err) {
+            console.error("API কল করতে সমস্যা হয়েছে:", err);
+            removeTypingIndicator();
+            
+            if (assistantMessageDiv) {
+                assistantMessageDiv.parentElement.remove();
+            }
+            
+            addMessage("assistant", `<em>দুঃখিত, একটি সমস্যা হয়েছে। ${err.message} আবার চেষ্টা করুন।</em>`);
+        } finally {
+            setProcessingState(false);
+        }
+    }
+</script>
+
 </body>
 </html>
