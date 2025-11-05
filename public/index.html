@@ -56,7 +56,7 @@
 
   <header class="text-center py-4 border-b border-border-color flex-shrink-0">
     <div class="text-4xl mb-2">🔱</div>
-    <h1 class="text-xl font-bold text-primary">সনাতন চ্যাটবট</h1>
+    <h1 class="text-xl font-bold text-primary">সনাতন চ্যাটবট 🥰</h1>
     <p class="text-sm text-gray-600">ঐতিহাসিক ও যৌক্তিক আলোচনা</p>
   </header>
 
@@ -226,7 +226,7 @@
       showTypingIndicator();
 
       try {
-        const res = await fetch("/api/chat", {
+        const res = await fetch("https://chat.goldr.org/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: chatHistory } )
