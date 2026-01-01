@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>সনাতন চ্যাটবট</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <style>
+    :root {
+      --primary: #f6821f;
+      --primary-hover: #e67e22;
+      --bg: #f9fafb;
+      --text: #1f2937;
+      --border: #e5e7eb;
+      --user-bg: #fff2e6;
+      --assistant-bg: #f3f4f6;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+    }
+    .bg-primary { background-color: var(--primary); }
+    .bg-user-bg { background-color: var(--user-bg); }
+    .bg-assistant-bg { background-color: var(--assistant-bg); }
+    #chat-messages {
+      height: calc(100vh - 180px);
+    }
+    /* Markdown styling */
+    #chat-messages p { margin-bottom: 0.5rem; }
+    #chat-messages p:last-child { margin-bottom: 0; }
+  </style>
+</head>
+<body class="flex flex-col h-screen max-w-2xl mx-auto shadow-lg">
+  <header class="text-center p-4 border-b bg-white sticky top-0 z-10">
+    <div class="text-3xl mb-1">🔱</div>
+    <h1 class="text-xl font-bold text-[#f6821f]">সনাতন চ্যাটবট</h1>
+    <p class="text-sm text-gray-500">ঐতিহাসিক ও যৌক্তিক আলোচনা</p>
+  </header>
+
+  <main class="flex-1 overflow-hidden bg-white">
+    <div id="chat-messages" class="overflow-y-auto p-4 space-y-4">
+      <!-- Messages will be injected here -->
+    </div>
+  </main>
+
+  <footer class="p-4 border-t bg-white">
+    <div class="flex gap-2">
+      <textarea id="user-input" 
+        class="flex-1 p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#f6821f] min-h-[44px] max-h-32" 
+        placeholder="আপনার বার্তা লিখুন..." 
+        rows="1"></textarea>
+      <button id="send-button" 
+        class="bg-[#f6821f] hover:bg-[#e67e22] text-white px-6 py-2 rounded-lg font-bold transition-colors disabled:bg-gray-400">
+        প্রেরণ
+      </button>
+    </div>
+  </footer>
+
+  <script src="chat.js"></script>
+</body>
+</html>
