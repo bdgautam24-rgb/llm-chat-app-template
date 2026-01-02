@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>সনাতন চ্যাটবট - পূর্ণ নিয়ন্ত্রণ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <style>
+    :root {
+      --primary: #f6821f;
+      --primary-hover: #e67e22;
+      --bg: #f9fafb;
+      --text: #1f2937;
+      --border: #e5e7eb;
+      --user-bg: #fff2e6;
+      --assistant-bg: #f3f4f6;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+    }
+    #chat-messages {
+      height: calc(100vh - 240px);
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 50;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: white;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body class="flex flex-col h-screen max-w-2xl mx-auto shadow-lg bg-white">
+  <!-- Header -->
+  <header class="p-4 border-b bg-white sticky top-0 z-10">
+    <div class="flex justify-between items-center mb-2">
+      <div class="text-2xl">🔱</div>
+      <div class="flex gap-2">
+        <button id="new-chat-btn" class="text-sm bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition">নতুন চ্যাট</button>
+        <button id="delete-session-btn" class="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition">মুছে ফেলুন</button>
+      </div>
+    </div>
+    <h1 class="text-xl font-bold text-[#f6821f] text-center">সনাতন চ্যাটবট</h1>
+    <nav class="flex justify-center gap-4 mt-2 text-xs text-gray-500">
+      <a href="#" onclick="showModal('about-modal')" class="hover:text-[#f6821f]">About</a>
+      <a href="#" onclick="showModal('terms-modal')" class="hover:text-[#f6821f]">Terms</a>
+      <a href="#" onclick="showModal('privacy-modal')" class="hover:text-[#f6821f]">Privacy</a>
+      <a href="#" onclick="showModal('eeat-modal')" class="hover:text-[#f6821f]">Author</a>
+    </nav>
+  </header>
+
+  <!-- Chat Area -->
+  <main class="flex-1 overflow-hidden">
+    <div id="chat-messages" class="overflow-y-auto p-4 space-y-4">
+      <!-- Messages will be injected here -->
+    </div>
+  </main>
+
+  <!-- Footer Input -->
+  <footer class="p-4 border-t bg-white">
+    <div class="flex gap-2">
+      <textarea id="user-input" 
+        class="flex-1 p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#f6821f] min-h-[44px] max-h-32" 
+        placeholder="আপনার বার্তা লিখুন..." 
+        rows="1"></textarea>
+      <button id="send-button" 
+        class="bg-[#f6821f] hover:bg-[#e67e22] text-white px-6 py-2 rounded-lg font-bold transition-colors disabled:bg-gray-400">
+        প্রেরণ
+      </button>
+    </div>
+    <p class="text-[10px] text-center text-gray-400 mt-2">© ২০২৬ গৌতম কুমার পাল। সর্বস্বত্ব সংরক্ষিত।</p>
+  </footer>
+
+  <!-- Modals -->
+  <div id="about-modal" class="modal">
+    <div class="modal-content">
+      <div class="flex justify-between items-center border-b pb-2 mb-4">
+        <h2 class="text-xl font-bold">About সনাতন চ্যাটবট</h2>
+        <button onclick="closeModal('about-modal')" class="text-2xl">&times;</button>
+      </div>
+      <div class="prose text-sm">
+        <p>সনাতন চ্যাটবট একটি উন্নত এআই এজেন্ট যা সনাতন ধর্ম সম্পর্কিত ঐতিহাসিক, যৌক্তিক এবং গবেষণামূলক তথ্য প্রদানের জন্য তৈরি করা হয়েছে।</p>
+        <p><strong>প্রতিষ্ঠাতা:</strong> গৌতম কুমার পাল (GoldR এর প্রতিষ্ঠাতা)।</p>
+        <p>আমাদের লক্ষ্য হলো কুসংস্কারমুক্ত, বিজ্ঞানভিত্তিক এবং যুক্তিনির্ভর ধর্মীয় জ্ঞান প্রচার করা।</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="terms-modal" class="modal">
+    <div class="modal-content">
+      <div class="flex justify-between items-center border-b pb-2 mb-4">
+        <h2 class="text-xl font-bold">Terms of Service</h2>
+        <button onclick="closeModal('terms-modal')" class="text-2xl">&times;</button>
+      </div>
+      <div class="prose text-sm">
+        <p>১. এই চ্যাটবটটি শুধুমাত্র তথ্যগত উদ্দেশ্যে ব্যবহার করা যাবে।</p>
+        <p>২. কোনো প্রকার বিদ্বেষমূলক বা অবমাননাকর প্রশ্ন করা নিষিদ্ধ।</p>
+        <p>৩. এআই দ্বারা প্রদত্ত তথ্য গবেষণামূলক, তবে চূড়ান্ত সিদ্ধান্তের জন্য মূল শাস্ত্রীয় গ্রন্থ দেখার পরামর্শ দেওয়া হয়।</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="privacy-modal" class="modal">
+    <div class="modal-content">
+      <div class="flex justify-between items-center border-b pb-2 mb-4">
+        <h2 class="text-xl font-bold">Privacy Policy</h2>
+        <button onclick="closeModal('privacy-modal')" class="text-2xl">&times;</button>
+      </div>
+      <div class="prose text-sm">
+        <p>১. আমরা আপনার ব্যক্তিগত তথ্য (নাম, ইমেইল) সংগ্রহ করি না।</p>
+        <p>২. চ্যাট হিস্ট্রি শুধুমাত্র আপনার ব্রাউজারের LocalStorage-এ সংরক্ষিত থাকে।</p>
+        <p>৩. আপনি যেকোনো সময় 'মুছে ফেলুন' বাটনে ক্লিক করে আপনার সমস্ত ডাটা মুছে ফেলতে পারেন।</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="eeat-modal" class="modal">
+    <div class="modal-content">
+      <div class="flex justify-between items-center border-b pb-2 mb-4">
+        <h2 class="text-xl font-bold">EEAT & Authority</h2>
+        <button onclick="closeModal('eeat-modal')" class="text-2xl">&times;</button>
+      </div>
+      <div class="prose text-sm">
+        <h3>Author</h3>
+        <p><strong>Experience:</strong> গৌতম কুমার পাল দীর্ঘ সময় ধরে প্রযুক্তি এবং সনাতন ধর্মের তুলনামূলক গবেষণায় নিয়োজিত।</p>
+        <p><strong>Expertise:</strong> এই বটটি তৈরি করা হয়েছে আয়ুর্বেদ, চরকসংহীতা এবং মনু সংহীতার মতো প্রামাণ্য গ্রন্থের ডাটাবেস ব্যবহার করে।</p>
+        <p><strong>Authoritativeness:</strong> GoldR এবং গৌতম কুমার পালের গবেষণালব্ধ তথ্য এখানে প্রাধান্য পায়।</p>
+        <p><strong>Trustworthiness:</strong> আমরা তথ্যের স্বচ্ছতা এবং যৌক্তিক ভিত্তিকে সর্বোচ্চ গুরুত্ব দেই।</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="chat.js"></script>
+  <script>
+    function showModal(id) {
+      document.getElementById(id).style.display = "block";
+    }
+    function closeModal(id) {
+      document.getElementById(id).style.display = "none";
+    }
+    window.onclick = function(event) {
+      if (event.target.className === 'modal') {
+        event.target.style.display = "none";
+      }
+    }
+  </script>
+</body>
+</html>
