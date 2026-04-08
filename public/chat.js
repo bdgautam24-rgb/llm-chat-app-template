@@ -6,7 +6,7 @@ const newChatBtn = document.getElementById("new-chat-btn");
 const deleteSessionBtn = document.getElementById("delete-session-btn");
 
 // === State ===
-const DEFAULT_WELCOME = { role: "assistant", content: "নমস্কার! আমি গৌতম কুমার দ্বারা তৈরি একটি চ্যাটবট। আমি আপনাকে কীভাবে সাহায্য করতে পারি?" };
+const DEFAULT_WELCOME = { role: "assistant", content: "নমস্কার! আমি GoldR দ্বারা তৈরি একটি চ্যাটবট। আমি আপনাকে কীভাবে সাহায্য করতে পারি?" };
 let chatHistory = [DEFAULT_WELCOME];
 let isProcessing = false;
 
@@ -76,7 +76,7 @@ function addMessage(role, content, timestamp = new Date()) {
 
   const avatar = document.createElement("div");
   avatar.className = `w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 ${isUser ? 'bg-[#f6821f] ml-3 order-2' : 'bg-blue-500 mr-3 order-1'}`;
-  avatar.textContent = isUser ? "👤" : "🔱";
+  avatar.textContent = isUser ? "👤" : "😇";
 
   const messageDiv = document.createElement("div");
   messageDiv.className = `max-w-[75%] p-3 rounded-lg relative group order-1 ${isUser ? 'bg-[#fff2e6] rounded-br-none' : 'bg-[#f3f4f6] rounded-bl-none'}`;
