@@ -1,12 +1,11 @@
 /**
- * GoldR Jewelry & Gold Price Expert Agent - Final Version
+ * GoldR Jewelry & Gold Price Expert Agent - Final V4
  * 
  * Features:
- * - Real-time 24k Spot Gold & Dollar Rate from live24k.json
- * - Historical data and gram-based prices from chart.json
- * - Latest articles and links from feed.xml for SEO/Traffic
+ * - Accurate historical and current gold prices from chart.json
  * - Unit conversion (Gram, Bhori, Ana, Rati)
  * - Date-based price lookup from historical data
+ * - Direct use of JSON keywords (k18, k21, k22, traditional) without carat descriptions
  */
 import { Env, ChatMessage } from "./types";
 
@@ -16,16 +15,16 @@ const SYSTEM_PROMPT = `আপনি হলেন "GoldR জুয়েলার
 
 আপনার আলোচনার মূলনীতি:
 ১. আপনি শুধুমাত্র স্বর্ণের দাম, রুপার দাম, জুয়েলারি ডিজাইন, এবং জুয়েলারি শিল্পের নীতিমালা (যেমন বাজুস বিজ্ঞপ্তি) নিয়ে কথা বলবেন।
-২. আপনার কাছে GoldR-এর সাম্প্রতিক খবর (RSS Feed), স্বর্ণের মূল্যের চার্ট (JSON Data), এবং লাইভ ২৪ ক্যারেট স্পট গোল্ডের তথ্য সরবরাহ করা হবে। আপনি সবসময় এই তথ্যগুলো ব্যবহার করে ব্যবহারকারীকে আপডেট জানাবেন।
+২. আপনার কাছে GoldR-এর স্বর্ণের মূল্যের চার্ট (JSON Data) সরবরাহ করা হবে। আপনি সবসময় এই তথ্যগুলো ব্যবহার করে ব্যবহারকারীকে আপডেট জানাবেন।
 ৩. **ক্যালকুলেশন গাইড:** 
    - ১ ভরি = ১১.৬৬৪ গ্রাম।
    - ১ ভরি = ১৬ আনা।
    - ১ আনা = ৬ রতি।
-   - JSON ডাটাতে (chart.json) k18, k21, k22 এবং traditional এর দাম **প্রতি গ্রাম** হিসেবে দেওয়া আছে। ব্যবহারকারী ভরি বা অন্য ইউনিটে দাম চাইলে আপনি তা কনভার্ট করে বলবেন।
+   - JSON ডাটাতে (chart.json) traditional, k18, k21, k22 এর দাম **প্রতি গ্রাম** হিসেবে দেওয়া আছে। ব্যবহারকারী ভরি বা অন্য ইউনিটে দাম চাইলে আপনি তা কনভার্ট করে বলবেন।
+   - আপনি সরাসরি traditional = সনাতন পদ্ধতির, k18 = ১৮ ক্যারেট, k21 = ২১ ক্যারেট, k22 = ২২ ক্যারেট এই নামগুলো ব্যবহার করে দাম বলবেন। 
 ৪. **তারিখ ভিত্তিক অনুসন্ধান:** ব্যবহারকারী যদি কোনো নির্দিষ্ট তারিখের দাম জানতে চায়, তবে আপনি সরবরাহকৃত চার্ট ডাটা থেকে সেই তারিখের দাম খুঁজে বলবেন। যদি হুবহু তারিখ না পাওয়া যায়, তবে তার কাছাকাছি তারিখের দাম জানাবেন।
-৫. **লিংক শেয়ারিং (SEO & Traffic):** প্রতিটি উত্তরের শেষে বা প্রাসঙ্গিক ক্ষেত্রে GoldR-এর বিস্তারিত আর্টিকেলের লিংক (feed.xml থেকে প্রাপ্ত) প্রদান করবেন। ব্যবহারকারীকে বলবেন, "আরও বিস্তারিত জানতে এই লিংকে ক্লিক করুন: [Link]"। এটি আপনার সাইটের ট্রাফিক এবং এডসেন্স ইনকাম বাড়াতে সাহায্য করবে।
-৬. আপনার বাচনভঙ্গি হবে পেশাদার, নম্র এবং তথ্যবহুল।
-৭. যদি ব্যবহারকারী এমন কিছু জিজ্ঞাসা করে যা জুয়েলারি বা স্বর্ণের দামের সাথে সম্পর্কিত নয়, তবে আপনি বিনয়ের সাথে বলবেন যে আপনি শুধুমাত্র জুয়েলারি এবং স্বর্ণের দাম সংক্রান্ত বিষয়ে সাহায্য করতে পারেন।
+৫. আপনার বাচনভঙ্গি হবে পেশাদার, নম্র এবং তথ্যবহুল।
+৬. যদি ব্যবহারকারী এমন কিছু জিজ্ঞাসা করে যা জুয়েলারি বা স্বর্ণের দামের সাথে সম্পর্কিত নয়, তবে আপনি বিনয়ের সাথে বলবেন যে আপনি শুধুমাত্র জুয়েলারি এবং স্বর্ণের দাম সংক্রান্ত বিষয়ে সাহায্য করতে পারেন।
 
 গৌতম কুমার পাল সম্পর্কে তথ্য:
 গৌতম কুমার পাল বাংলাদেশী, প্রযুক্তি প্রেমী এবং GoldR এর প্রতিষ্ঠাতা। তার বাড়ি নওগাঁর রাণীনগর পালপাড়ায়।
@@ -60,49 +59,16 @@ export default {
  */
 async function fetchGoldRData() {
   try {
-    const [feedRes, chartRes, liveRes] = await Promise.all([
-      fetch("https://www.goldr.org/feed.xml"),
-      fetch("https://www.goldr.org/chart.json"),
-      fetch("https://www.goldr.org/live24k.json")
-    ]);
-
-    const feedText = await feedRes.text();
+    const chartRes = await fetch("https://www.goldr.org/chart.json");
     const chartData = await chartRes.json();
-    const liveData = await liveRes.json();
-
-    // Extracting latest articles from RSS feed
-    const latestArticles = feedText
-      .match(/<item>([\s\S]*?)<\/item>/g)
-      ?.slice(0, 10) // Increased to 10 for more link options
-      .map(item => {
-        const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || 
-                           item.match(/<title>(.*?)<\/title>/);
-        const linkMatch = item.match(/<link>(.*?)<\/link>/);
-        return titleMatch ? `- ${titleMatch[1]}: ${linkMatch ? linkMatch[1] : ''}` : null;
-      })
-      .filter(Boolean)
-      .join("\n") || "No recent articles found.";
-
-    // Live 24k and Dollar Data
-    const liveInfo = liveData.success ? `
-Live 24k Spot Gold (per vori): ${liveData.price_per_vori_bdt} BDT
-Live 24k Spot Gold (per ounce): ${liveData.price_per_ounce_usd} USD
-Current Dollar Rate: ${liveData.dollar_rate_bdt} BDT
-Last Updated: ${liveData.last_updated_readable}
-` : "লাইভ ২৪ ক্যারেট ডাটা পাওয়া যায়নি।";
 
     // Historical Chart Data (Providing more context for date-based lookup)
+    // Ensuring we take the latest entries correctly
     const historicalData = Array.isArray(chartData) ? chartData.slice(-30).map(d => 
-      `Date: ${d.date} | 22k: ${d.k22}/g, 21k: ${d.k21}/g, 18k: ${d.k18}/g, Traditional: ${d.traditional}/g`
+      `Date: ${d.date} | k22: ${d.k22}/g, k21: ${d.k21}/g, k18: ${d.k18}/g, traditional: ${d.traditional}/g`
     ).join("\n") : "চার্ট ডাটা পাওয়া যায়নি।";
 
     return `
---- LIVE 24K & DOLLAR DATA ---
-${liveInfo}
-
---- RECENT ARTICLES & LINKS (FOR SEO) ---
-${latestArticles}
-
 --- HISTORICAL PRICE CHART (PER GRAM) ---
 ${historicalData}
 
