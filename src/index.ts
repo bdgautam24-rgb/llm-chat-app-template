@@ -1,12 +1,11 @@
 /**
- * GoldR Jewelry & Gold Price Expert Agent - Advanced Final Version
+ * GoldR Jewelry & Gold Price Expert Agent - Final V3
  * 
  * Features:
- * - Accurate mapping: k22 -> 22 Karat, k21 -> 21 Karat, k18 -> 18 Karat, traditional -> Traditional
- * - Real-time historical and current gold prices from chart.json (per gram)
- * - Advanced Unit Conversion: Gram, Bhori, Ana, Rati
- * - Date-based price lookup and price trend analysis
- * - Professional jewelry advisory based on BAJUS standards
+ * - Accurate historical and current gold prices from chart.json
+ * - Unit conversion (Gram, Bhori, Ana, Rati)
+ * - Date-based price lookup from historical data
+ * - Removed Spot Gold (24k) and Article Links as requested
  */
 import { Env, ChatMessage } from "./types";
 
@@ -17,22 +16,12 @@ const SYSTEM_PROMPT = `আপনি হলেন "GoldR জুয়েলার
 আপনার আলোচনার মূলনীতি:
 ১. আপনি শুধুমাত্র স্বর্ণের দাম, রুপার দাম, জুয়েলারি ডিজাইন, এবং জুয়েলারি শিল্পের নীতিমালা (যেমন বাজুস বিজ্ঞপ্তি) নিয়ে কথা বলবেন।
 ২. আপনার কাছে GoldR-এর স্বর্ণের মূল্যের চার্ট (JSON Data) সরবরাহ করা হবে। আপনি সবসময় এই তথ্যগুলো ব্যবহার করে ব্যবহারকারীকে আপডেট জানাবেন।
-৩. **ক্যারেট ম্যাপিং ও ক্যালকুলেশন গাইড:** 
-   - JSON ডাটাতে (chart.json) k22, k21, k18 এবং traditional এর দাম **প্রতি গ্রাম** হিসেবে দেওয়া আছে।
-   - আপনি এগুলোকে নিম্নোক্তভাবে উপস্থাপন করবেন:
-     * k22 = 22 Karat (২২ ক্যারেট)
-     * k21 = 21 Karat (২১ ক্যারেট)
-     * k18 = 18 Karat (১৮ ক্যারেট)
-     * traditional = Traditional (সনাতন পদ্ধতি)
-   - **ইউনিট কনভার্সন:**
-     * ১ ভরি = ১১.৬৬৪ গ্রাম।
-     * ১ ভরি = ১৬ আনা।
-     * ১ আনা = ৬ রতি।
-   - ব্যবহারকারী গ্রাম, ভরি, আনা বা রতি-তে দাম চাইলে আপনি তা কনভার্ট করে নিখুঁত হিসাব দেবেন।
-৪. **অ্যাডভান্সড ফিচার:**
-   - **তারিখ ভিত্তিক অনুসন্ধান:** ব্যবহারকারী যদি কোনো নির্দিষ্ট তারিখের দাম জানতে চায়, তবে আপনি সরবরাহকৃত চার্ট ডাটা থেকে সেই তারিখের দাম খুঁজে বলবেন।
-   - **প্রাইস ট্রেন্ড:** গত কয়েকদিনের দামের তুলনা করে দাম বাড়ছে না কমছে তা জানাবেন।
-   - **পরামর্শ:** ব্যবহারকারীকে স্বর্ণ কেনা বা বিনিয়োগের বিষয়ে সাধারণ পরামর্শ দেবেন (যেমন: "আজকের দাম গত সপ্তাহের চেয়ে কম, তাই বিনিয়োগের ভালো সময় হতে পারে")।
+৩. **ক্যালকুলেশন গাইড:** 
+   - ১ ভরি = ১১.৬৬৪ গ্রাম।
+   - ১ ভরি = ১৬ আনা।
+   - ১ আনা = ৬ রতি।
+   - JSON ডাটাতে (chart.json) k18, k21, k22 এবং traditional এর দাম **প্রতি গ্রাম** হিসেবে দেওয়া আছে। ব্যবহারকারী ভরি বা অন্য ইউনিটে দাম চাইলে আপনি তা কনভার্ট করে বলবেন।
+৪. **তারিখ ভিত্তিক অনুসন্ধান:** ব্যবহারকারী যদি কোনো নির্দিষ্ট তারিখের দাম জানতে চায়, তবে আপনি সরবরাহকৃত চার্ট ডাটা থেকে সেই তারিখের দাম খুঁজে বলবেন। যদি হুবহু তারিখ না পাওয়া যায়, তবে তার কাছাকাছি তারিখের দাম জানাবেন।
 ৫. আপনার বাচনভঙ্গি হবে পেশাদার, নম্র এবং তথ্যবহুল।
 ৬. যদি ব্যবহারকারী এমন কিছু জিজ্ঞাসা করে যা জুয়েলারি বা স্বর্ণের দামের সাথে সম্পর্কিত নয়, তবে আপনি বিনয়ের সাথে বলবেন যে আপনি শুধুমাত্র জুয়েলারি এবং স্বর্ণের দাম সংক্রান্ত বিষয়ে সাহায্য করতে পারেন।
 
@@ -69,12 +58,13 @@ export default {
  */
 async function fetchGoldRData() {
   try {
-    const chartRes = await fetch("https://www.goldr.org/chart.json");
+    const chartRes = await fetch("https://www.goldr.org/chart2.json");
     const chartData = await chartRes.json();
 
-    // Historical Chart Data (Providing last 30 entries for context)
+    // Historical Chart Data (Providing more context for date-based lookup)
+    // Ensuring we take the latest entries correctly
     const historicalData = Array.isArray(chartData) ? chartData.slice(-30).map(d => 
-      `Date: ${d.date} | 22 Karat (k22): ${d.k22}/g, 21 Karat (k21): ${d.k21}/g, 18 Karat (k18): ${d.k18}/g, Traditional (traditional): ${d.traditional}/g`
+      `Date: ${d.date} | 22k: ${d.k22}/g, 21k: ${d.k21}/g, 18k: ${d.k18}/g, Traditional: ${d.traditional}/g`
     ).join("\n") : "চার্ট ডাটা পাওয়া যায়নি।";
 
     return `
