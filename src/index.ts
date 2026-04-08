@@ -1,8 +1,13 @@
+
 /**
- * GoldR Jewelry & Gold Price Expert Agent
+ * GoldR Jewelry & Gold Price Expert Agent - Final Version
  * 
- * This agent specializes in providing gold prices and jewelry-related information
- * using real-time data from goldr.org.
+ * Features:
+ * - Real-time 24k Spot Gold & Dollar Rate from live24k.json
+ * - Historical data and gram-based prices from chart.json
+ * - Latest articles and links from feed.xml for SEO/Traffic
+ * - Unit conversion (Gram, Bhori, Ana, Rati)
+ * - Date-based price lookup from historical data
  */
 import { Env, ChatMessage } from "./types";
 
@@ -12,11 +17,17 @@ const SYSTEM_PROMPT = `আপনি হলেন "GoldR জুয়েলার
 
 আপনার আলোচনার মূলনীতি:
 ১. আপনি শুধুমাত্র স্বর্ণের দাম, রুপার দাম, জুয়েলারি ডিজাইন, এবং জুয়েলারি শিল্পের নীতিমালা (যেমন বাজুস বিজ্ঞপ্তি) নিয়ে কথা বলবেন।
-২. আপনার কাছে GoldR-এর সাম্প্রতিক খবর (RSS Feed) এবং স্বর্ণের মূল্যের চার্ট (JSON Data) এর তথ্য সরবরাহ করা হবে। আপনি সবসময় এই তথ্যগুলো ব্যবহার করে ব্যবহারকারীকে আপডেট জানাবেন।
-৩. আপনি স্বর্ণের বিশুদ্ধতা (২২ ক্যারেট, ২১ ক্যারেট, ১৮ ক্যারেট এবং সনাতন পদ্ধতি) সম্পর্কে বিশেষজ্ঞের মতো পরামর্শ দেবেন।
-৪. আপনার বাচনভঙ্গি হবে পেশাদার, নম্র এবং তথ্যবহুল।
-৫. যদি ব্যবহারকারী এমন কিছু জিজ্ঞাসা করে যা জুয়েলারি বা স্বর্ণের দামের সাথে সম্পর্কিত নয়, তবে আপনি বিনয়ের সাথে বলবেন যে আপনি শুধুমাত্র জুয়েলারি এবং স্বর্ণের দাম সংক্রান্ত বিষয়ে সাহায্য করতে পারেন।
-৬. আপনি নিশ্চিত করবেন যে ব্যবহারকারী যেন GoldR (https://www.goldr.org) থেকে সর্বশেষ আপডেটগুলো পায়।
+২. আপনার কাছে GoldR-এর সাম্প্রতিক খবর (RSS Feed), স্বর্ণের মূল্যের চার্ট (JSON Data), এবং লাইভ ২৪ ক্যারেট স্পট গোল্ডের তথ্য সরবরাহ করা হবে। আপনি সবসময় এই তথ্যগুলো ব্যবহার করে ব্যবহারকারীকে আপডেট জানাবেন।
+৩. **ক্যালকুলেশন গাইড:** 
+   - ১ ভরি = ১১.৬৬৪ গ্রাম।
+   - ১ ভরি = ১৬ আনা।
+   - ১ আনা = ৬ রতি।
+   - ১ রতি = ১০ পয়েন্ট।
+   - JSON ডাটাতে (chart.json) k18, k21, k22 এবং traditional এর দাম **প্রতি গ্রাম** হিসেবে দেওয়া আছে। ব্যবহারকারী ভরি বা অন্য ইউনিটে দাম চাইলে আপনি তা কনভার্ট করে বলবেন।
+৪. **তারিখ ভিত্তিক অনুসন্ধান:** ব্যবহারকারী যদি কোনো নির্দিষ্ট তারিখের দাম জানতে চায়, তবে আপনি সরবরাহকৃত চার্ট ডাটা থেকে সেই তারিখের দাম খুঁজে বলবেন। যদি হুবহু তারিখ না পাওয়া যায়, তবে তার কাছাকাছি তারিখের দাম জানাবেন।
+৫. **লিংক শেয়ারিং (SEO & Traffic):** প্রতিটি উত্তরের শেষে বা প্রাসঙ্গিক ক্ষেত্রে GoldR-এর বিস্তারিত আর্টিকেলের লিংক (feed.xml থেকে প্রাপ্ত) প্রদান করবেন। ব্যবহারকারীকে বলবেন, "আরও বিস্তারিত জানতে এই লিংকে ক্লিক করুন: [Link]"। এটি আপনার সাইটের ট্রাফিক এবং এডসেন্স ইনকাম বাড়াতে সাহায্য করবে।
+৬. আপনার বাচনভঙ্গি হবে পেশাদার, নম্র এবং তথ্যবহুল।
+৭. যদি ব্যবহারকারী এমন কিছু জিজ্ঞাসা করে যা জুয়েলারি বা স্বর্ণের দামের সাথে সম্পর্কিত নয়, তবে আপনি বিনয়ের সাথে বলবেন যে আপনি শুধুমাত্র জুয়েলারি এবং স্বর্ণের দাম সংক্রান্ত বিষয়ে সাহায্য করতে পারেন।
 
 গৌতম কুমার পাল সম্পর্কে তথ্য:
 গৌতম কুমার পাল বাংলাদেশী, প্রযুক্তি প্রেমী এবং GoldR এর প্রতিষ্ঠাতা। তার বাড়ি নওগাঁর রাণীনগর পালপাড়ায়।
@@ -51,18 +62,20 @@ export default {
  */
 async function fetchGoldRData() {
   try {
-    const [feedRes, chartRes] = await Promise.all([
+    const [feedRes, chartRes, liveRes] = await Promise.all([
       fetch("https://www.goldr.org/feed.xml"),
-      fetch("https://www.goldr.org/chart.json")
+      fetch("https://www.goldr.org/chart.json"),
+      fetch("https://www.goldr.org/live24k.json")
     ]);
 
     const feedText = await feedRes.text();
     const chartData = await chartRes.json();
+    const liveData = await liveRes.json();
 
     // Extracting latest articles from RSS feed
     const latestArticles = feedText
       .match(/<item>([\s\S]*?)<\/item>/g)
-      ?.slice(0, 5)
+      ?.slice(0, 10) // Increased to 10 for more link options
       .map(item => {
         const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || 
                            item.match(/<title>(.*?)<\/title>/);
@@ -72,33 +85,38 @@ async function fetchGoldRData() {
       .filter(Boolean)
       .join("\n") || "No recent articles found.";
 
-    // Getting the latest gold price from chart data
-    const latestPrice = Array.isArray(chartData) ? chartData[chartData.length - 1] : null;
-    
-    let priceInfo = "স্বর্ণের দামের তথ্য পাওয়া যায়নি।";
-    if (latestPrice) {
-      // Calculate per gram price (assuming the data is per bhori/vola, which is standard in BD)
-      // 1 Bhori = 11.664 grams
-      const perGram22K = (latestPrice.k22 / 11.664).toFixed(2);
-      
-      priceInfo = `সর্বশেষ স্বর্ণের দাম (তারিখ: ${latestPrice.date}):
-- ২২ ক্যারেট: ${latestPrice.k22} টাকা (প্রতি গ্রাম: ${perGram22K} টাকা)
-- ২১ ক্যারেট: ${latestPrice.k21} টাকা
-- ১৮ ক্যারেট: ${latestPrice.k18} টাকা
-- সনাতন (Traditional): ${latestPrice.traditional} টাকা`;
-    }
+    // Live 24k and Dollar Data
+    const liveInfo = liveData.success ? `
+Live 24k Spot Gold (per vori): ${liveData.price_per_vori_bdt} BDT
+Live 24k Spot Gold (per ounce): ${liveData.price_per_ounce_usd} USD
+Current Dollar Rate: ${liveData.dollar_rate_bdt} BDT
+Last Updated: ${liveData.last_updated_readable}
+` : "লাইভ ২৪ ক্যারেট ডাটা পাওয়া যায়নি।";
+
+    // Historical Chart Data (Providing more context for date-based lookup)
+    const historicalData = Array.isArray(chartData) ? chartData.slice(-30).map(d => 
+      `Date: ${d.date} | 22k: ${d.k22}/g, 21k: ${d.k21}/g, 18k: ${d.k18}/g, Traditional: ${d.traditional}/g`
+    ).join("\n") : "চার্ট ডাটা পাওয়া যায়নি।";
 
     return `
-GoldR Recent Updates & BAJUS Notices:
+--- LIVE 24K & DOLLAR DATA ---
+${liveInfo}
+
+--- RECENT ARTICLES & LINKS (FOR SEO) ---
 ${latestArticles}
 
-Current Gold Price Context:
-${priceInfo}
-Update Time: ${new Date().toLocaleString('bn-BD')}
+--- HISTORICAL PRICE CHART (PER GRAM) ---
+${historicalData}
+
+--- CALCULATION CONSTANTS ---
+1 Bhori = 11.664 Grams
+1 Bhori = 16 Ana
+1 Ana = 6 Rati
+1 Rati = 10 Point
 `;
   } catch (error) {
     console.error("Error fetching GoldR data:", error);
-    return "GoldR থেকে তথ্য সংগ্রহ করতে সমস্যা হয়েছে। অনুগ্রহ করে ম্যানুয়ালি goldr.org চেক করুন।";
+    return "GoldR থেকে তথ্য সংগ্রহ করতে সমস্যা হয়েছে।";
   }
 }
 
@@ -111,11 +129,11 @@ async function handleChatRequest(
       messages: ChatMessage[];
     };
 
-    // Fetch dynamic data from GoldR to provide as context
+    // Fetch dynamic data from GoldR
     const goldrContext = await fetchGoldRData();
 
     // Prepare the context-aware system prompt
-    const fullSystemPrompt = `${SYSTEM_PROMPT}\n\nবর্তমান বাজার তথ্য এবং আপডেট:\n${goldrContext}`;
+    const fullSystemPrompt = `${SYSTEM_PROMPT}\n\nবর্তমান বাজার তথ্য এবং ডাটাবেস:\n${goldrContext}`;
 
     // Add or update system prompt
     const systemMsgIndex = messages.findIndex((msg) => msg.role === "system");
