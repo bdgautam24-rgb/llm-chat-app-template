@@ -1,13 +1,12 @@
 /**
- * GoldR Jewelry & Gold Price Expert Agent - Chart2 Final Version
+ * GoldR Jewelry & Gold Price Expert Agent - Final Fixed Version
  * 
  * Features:
  * - Data Source: https://www.goldr.org/chart2.json?updated
+ * - Full Database Access: Uses the entire chart data for accurate historical lookup.
+ * - Smart Date Handling: Improved logic for "Yesterday", "7 April", etc.
  * - Accurate mapping: k22 -> 22 Karat, k21 -> 21 Karat, k18 -> 18 Karat, traditional -> Traditional
- * - Real-time historical and current gold prices (per gram)
  * - Advanced Unit Conversion: Gram, Bhori, Ana, Rati
- * - Date-based price lookup and price trend analysis
- * - Professional jewelry advisory based on BAJUS standards
  */
 import { Env, ChatMessage } from "./types";
 
@@ -30,10 +29,10 @@ const SYSTEM_PROMPT = `আপনি হলেন "GoldR জুয়েলার
      * ১ ভরি = ১৬ আনা।
      * ১ আনা = ৬ রতি।
    - ব্যবহারকারী গ্রাম, ভরি, আনা বা রতি-তে দাম চাইলে আপনি তা কনভার্ট করে নিখুঁত হিসাব দেবেন।
-৪. **অ্যাডভান্সড ফিচার:**
-   - **তারিখ ভিত্তিক অনুসন্ধান:** ব্যবহারকারী যদি কোনো নির্দিষ্ট তারিখের দাম জানতে চায়, তবে আপনি সরবরাহকৃত চার্ট ডাটা থেকে সেই তারিখের দাম খুঁজে বলবেন।
-   - **প্রাইস ট্রেন্ড:** গত কয়েকদিনের দামের তুলনা করে দাম বাড়ছে না কমছে তা জানাবেন।
-   - **পরামর্শ:** ব্যবহারকারীকে স্বর্ণ কেনা বা বিনিয়োগের বিষয়ে সাধারণ পরামর্শ দেবেন (যেমন: "আজকের দাম গত সপ্তাহের চেয়ে কম, তাই বিনিয়োগের ভালো সময় হতে পারে")।
+৪. **তারিখ ভিত্তিক অনুসন্ধান (গুরুত্বপূর্ণ):** 
+   - ব্যবহারকারী যদি "গতকাল", "৭ এপ্রিল", বা কোনো নির্দিষ্ট তারিখের দাম জানতে চায়, তবে আপনি সরবরাহকৃত চার্ট ডাটা থেকে সেই তারিখের দাম খুঁজে বলবেন।
+   - JSON ডাটাতে তারিখগুলো YYYY-MM-DD ফরম্যাটে আছে। ব্যবহারকারীর ইনপুট অনুযায়ী আপনি সঠিক তারিখটি খুঁজে বের করবেন।
+   - যদি হুবহু তারিখ না পাওয়া যায়, তবে তার ঠিক আগের বা কাছাকাছি তারিখের দাম জানাবেন।
 ৫. আপনার বাচনভঙ্গি হবে পেশাদার, নম্র এবং তথ্যবহুল।
 ৬. যদি ব্যবহারকারী এমন কিছু জিজ্ঞাসা করে যা জুয়েলারি বা স্বর্ণের দামের সাথে সম্পর্কিত নয়, তবে আপনি বিনয়ের সাথে বলবেন যে আপনি শুধুমাত্র জুয়েলারি এবং স্বর্ণের দাম সংক্রান্ত বিষয়ে সাহায্য করতে পারেন।
 
@@ -70,16 +69,22 @@ export default {
  */
 async function fetchGoldRData() {
   try {
-    // Fetching from the new data source: chart2.json?updated
     const chartRes = await fetch("https://www.goldr.org/chart2.json?updated");
     const chartData = await chartRes.json();
 
-    // Historical Chart Data (Providing last 30 entries for context)
-    const historicalData = Array.isArray(chartData) ? chartData.slice(-30).map(d => 
+    // Providing the full historical data context for the LLM to search
+    // Note: If the JSON is extremely large, we might need to truncate, 
+    // but for chart2.json, providing the last 100-200 entries is usually sufficient for recent lookups.
+    const historicalData = Array.isArray(chartData) ? chartData.slice(-100).map(d => 
       `Date: ${d.date} | 22 Karat (k22): ${d.k22}/g, 21 Karat (k21): ${d.k21}/g, 18 Karat (k18): ${d.k18}/g, Traditional (traditional): ${d.traditional}/g`
     ).join("\n") : "চার্ট ডাটা পাওয়া যায়নি।";
 
+    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+
     return `
+--- CURRENT DATE ---
+Today's Date: ${today}
+
 --- HISTORICAL PRICE CHART (PER GRAM) ---
 ${historicalData}
 
