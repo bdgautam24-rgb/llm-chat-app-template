@@ -6,30 +6,25 @@
  * streaming responses using Server-Sent Events (SSE).
  *
  * @license MIT
- */
-import { Env, ChatMessage } from "./types";
+ */import { Env, ChatMessage } from "./types";
 
-// Model ID for Workers AI model
-// https://developers.cloudflare.com/workers-ai/models/
+// Model ID for Workers AI
 const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
-// Default system prompt
-const SYSTEM_PROMPT = `আপনি হলেন "সনাতন চ্যাটবট", যা গৌতম কুমার[](https://www.goldr.org/author/Gautam/) দ্বারা তৈরি একটি উন্নত চ্যাট এজেন্ট। আপনার প্রধান কাজ হল সনাতন ধর্ম সম্পর্কিত শুধুমাত্র ঐতিহাসিক, যৌক্তিক এবং গবেষণামূলক তথ্য প্রদান করা।
-গৌতম কুমার পাল বাংলাদেশী, প্রযুক্তি প্রেমী, প্রোগ্রামিং ল্যাঙ্গুয়েজ ভালোবাসে। গৌতম কুমারের বাড়ি খট্টেশ্বর রাণীনগর পালপাড়া নওগাঁ রাজশাহী বাংলাদেশ।
-আপনার আলোচনার মূলনীতি:
-১. আপনি শুধুমাত্র সনাতন ধর্ম সম্পর্কিত ঐতিহাসিক ও যৌক্তিক বিষয়ে চ্যাট করবেন।
-২. আপনি কখনোই অলৌকিক বা অযৌক্তিক বিষয়ের নামে কোনো কথা বলবেন না। আপনার সমস্ত তথ্য গবেষণায় প্রমাণিত এবং যৌক্তিক ভিত্তির উপর প্রতিষ্ঠিত হতে হবে।
-৩. আপনি নিশ্চিত করবেন যে 'কর্মই ধর্ম'।
-৪. খাবারের বিষয়ে আপনার উত্তর হবে মেডিকেল সাইন্স, আয়ুর্বেদ, চরকসংহীতা এবং মনু সংহীতার উপর ভিত্তি করে।
-৫. আপনি নিশ্চিত করবেন যে খাবারের সাথে দেহের সম্পর্ক সম্পূর্ণভাবে বৈক্ষণানিক এবং খাবারের সাথে ভগবান বা ঈশ্বরের কোনো সম্পর্ক নেই।
-৬. আপনার বাচনভঙ্গি হবে দিনো কৃষ্ণ ঠাকুর এর মতো প্রাজ্ঞ, যুক্তিনির্ভর এবং তথ্যবহুল।
-৭. আপনাকে তৈরি করেছেন গৌতম কুমার পাল যিনি GoldR এর প্রতিষ্ঠাতা 
-সংক্ষেপে, আপনি হবেন সনাতন ধর্মের জ্ঞান ও যুক্তির মূর্ত প্রতীক।`;
+// GoldR Agent System Prompt
+const SYSTEM_PROMPT = `
+আপনি হলেন "GoldR AI Agent", যা GoldR.org-এর জন্য তৈরি একটি চ্যাট এজেন্ট। 
+আপনার কাজ: 
+১. শুধুমাত্র GoldR.org-এর দেওয়া তথ্য ব্যবহার করে উত্তর দিন। 
+   - সোনার দাম জানতে হলে chart.json ব্যবহার করুন। 
+   - ব্লগ/নিউজ বা অন্যান্য তথ্য জানতে হলে feed.xml ব্যবহার করুন। 
+২. অনুমান করবেন না। যদি তথ্য context-এ না থাকে, বলুন: "GoldR.org এ তথ্য পাওয়া যায়নি"। 
+৩. ব্যবহারকারীর প্রশ্নের উত্তর সংক্ষিপ্ত, স্পষ্ট এবং বাংলায় দিন। 
+৪. প্রশ্ন যদি হিসাব বা ক্যালকুলেশন সম্পর্কিত হয় (ভরি, ক্যারেট, গ্রাম), তাহলে chart.json থেকে হিসাব করে ফলাফল দিন। 
+৫. Chat শুধু তথ্য সরবরাহ করবে; personal opinion বা অনুমান কখনো দেবেন না। 
+`;
 
 export default {
-  /**
-   * Main request handler for the Worker
-   */
   async fetch(
     request: Request,
     env: Env,
@@ -44,29 +39,22 @@ export default {
 
     // API Routes
     if (url.pathname === "/api/chat") {
-      // Handle POST requests for chat
       if (request.method === "POST") {
         return handleChatRequest(request, env);
       }
-
-      // Method not allowed for other request types
       return new Response("Method not allowed", { status: 405 });
     }
 
-    // Handle 404 for unmatched routes
     return new Response("Not found", { status: 404 });
   },
 } satisfies ExportedHandler<Env>;
 
-/**
- * Handles chat API requests
- */
+// Handles chat API requests
 async function handleChatRequest(
   request: Request,
   env: Env,
 ): Promise<Response> {
   try {
-    // Parse JSON request body
     const { messages = [] } = (await request.json()) as {
       messages: ChatMessage[];
     };
@@ -76,31 +64,38 @@ async function handleChatRequest(
       messages.unshift({ role: "system", content: SYSTEM_PROMPT });
     }
 
-    // Run AI model with streaming enabled and increased token limit
+    // Fetch feed & chart data to provide context
+    const feedRes = await fetch("https://www.goldr.org/feed.xml");
+    const feedText = await feedRes.text();
+    const chartRes = await fetch("https://www.goldr.org/chart.json");
+    const chartText = await chartRes.text();
+
+    // Append GoldR context to the last user message
+    messages.push({
+      role: "system",
+      content: `Context Data:\nFeed:\n${feedText.slice(0, 5000)}\n\nChart:\n${chartText.slice(0, 2000)}`
+    });
+
     const aiResponse = await env.AI.run(
       MODEL_ID,
       {
         messages,
         stream: true,
-        max_tokens: 4096, // Increased token limit for longer responses
+        max_tokens: 4096,
       }
     );
 
-    // Return streaming response with correct content-type
     return new Response(aiResponse as ReadableStream, {
       headers: { "content-type": "text/event-stream" },
     });
   } catch (error: any) {
     console.error("Error processing chat request:", error);
     return new Response(
-      JSON.stringify({ 
-        error: "Failed to process request", 
-        details: error.message 
+      JSON.stringify({
+        error: "Failed to process request",
+        details: error.message
       }),
-      {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      },
+      { status: 500, headers: { "content-type": "application/json" } },
     );
   }
 }
