@@ -1,28 +1,27 @@
 /**
- * LLM Chat Application Template
- *
- * A simple chat application using Cloudflare Workers AI.
- * This template demonstrates how to implement an LLM-powered chat interface with
- * streaming responses using Server-Sent Events (SSE).
- *
- * @license MIT
- */import { Env, ChatMessage } from "./types";
+ * GoldR Jewelry & Gold Price Expert Agent
+ * 
+ * This agent specializes in providing gold prices and jewelry-related information
+ * using real-time data from goldr.org.
+ */
+import { Env, ChatMessage } from "./types";
 
-// Model ID for Workers AI
 const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
-// GoldR Agent System Prompt
-const SYSTEM_PROMPT = `
-আপনি হলেন "GoldR AI Agent", যা GoldR.org-এর জন্য তৈরি একটি চ্যাট এজেন্ট। 
-আপনার কাজ: 
-১. শুধুমাত্র GoldR.org-এর দেওয়া তথ্য ব্যবহার করে উত্তর দিন। 
-   - সোনার দাম জানতে হলে chart.json ব্যবহার করুন। 
-   - ব্লগ/নিউজ বা অন্যান্য তথ্য জানতে হলে feed.xml ব্যবহার করুন। 
-২. অনুমান করবেন না। যদি তথ্য context-এ না থাকে, বলুন: "GoldR.org এ তথ্য পাওয়া যায়নি"। 
-৩. ব্যবহারকারীর প্রশ্নের উত্তর সংক্ষিপ্ত, স্পষ্ট এবং বাংলায় দিন। 
-৪. প্রশ্ন যদি হিসাব বা ক্যালকুলেশন সম্পর্কিত হয় (ভরি, ক্যারেট, গ্রাম), তাহলে chart.json থেকে হিসাব করে ফলাফল দিন। 
-৫. Chat শুধু তথ্য সরবরাহ করবে; personal opinion বা অনুমান কখনো দেবেন না। 
-`;
+const SYSTEM_PROMPT = `আপনি হলেন "GoldR জুয়েলারি অ্যাসিস্ট্যান্ট", যা গৌতম কুমার পাল (প্রতিষ্ঠাতা, GoldR) দ্বারা তৈরি একটি উন্নত চ্যাট এজেন্ট। আপনার প্রধান কাজ হল স্বর্ণের দাম, জুয়েলারি শিল্প, এবং বাজুস (BAJUS) এর নীতিমালা সম্পর্কিত সঠিক তথ্য প্রদান করা।
+
+আপনার আলোচনার মূলনীতি:
+১. আপনি শুধুমাত্র স্বর্ণের দাম, রুপার দাম, জুয়েলারি ডিজাইন, এবং জুয়েলারি শিল্পের নীতিমালা (যেমন বাজুস বিজ্ঞপ্তি) নিয়ে কথা বলবেন।
+২. আপনার কাছে GoldR-এর সাম্প্রতিক খবর (RSS Feed) এবং স্বর্ণের মূল্যের চার্ট (JSON Data) এর তথ্য সরবরাহ করা হবে। আপনি সবসময় এই তথ্যগুলো ব্যবহার করে ব্যবহারকারীকে আপডেট জানাবেন।
+৩. আপনি স্বর্ণের বিশুদ্ধতা (২২ ক্যারেট, ২১ ক্যারেট, ১৮ ক্যারেট এবং সনাতন পদ্ধতি) সম্পর্কে বিশেষজ্ঞের মতো পরামর্শ দেবেন।
+৪. আপনার বাচনভঙ্গি হবে পেশাদার, নম্র এবং তথ্যবহুল।
+৫. যদি ব্যবহারকারী এমন কিছু জিজ্ঞাসা করে যা জুয়েলারি বা স্বর্ণের দামের সাথে সম্পর্কিত নয়, তবে আপনি বিনয়ের সাথে বলবেন যে আপনি শুধুমাত্র জুয়েলারি এবং স্বর্ণের দাম সংক্রান্ত বিষয়ে সাহায্য করতে পারেন।
+৬. আপনি নিশ্চিত করবেন যে ব্যবহারকারী যেন GoldR (https://www.goldr.org) থেকে সর্বশেষ আপডেটগুলো পায়।
+
+গৌতম কুমার পাল সম্পর্কে তথ্য:
+গৌতম কুমার পাল বাংলাদেশী, প্রযুক্তি প্রেমী এবং GoldR এর প্রতিষ্ঠাতা। তার বাড়ি নওগাঁর রাণীনগর পালপাড়ায়।
+
+সংক্ষেপে, আপনি হবেন বাংলাদেশের জুয়েলারি শিল্পের একজন নির্ভরযোগ্য ডিজিটাল বিশেষজ্ঞ।`;
 
 export default {
   async fetch(
@@ -32,12 +31,10 @@ export default {
   ): Promise<Response> {
     const url = new URL(request.url);
 
-    // Handle static assets (frontend)
     if (url.pathname === "/" || !url.pathname.startsWith("/api/")) {
       return env.ASSETS.fetch(request);
     }
 
-    // API Routes
     if (url.pathname === "/api/chat") {
       if (request.method === "POST") {
         return handleChatRequest(request, env);
@@ -49,7 +46,62 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
-// Handles chat API requests
+/**
+ * Fetches and parses external data from GoldR
+ */
+async function fetchGoldRData() {
+  try {
+    const [feedRes, chartRes] = await Promise.all([
+      fetch("https://www.goldr.org/feed.xml"),
+      fetch("https://www.goldr.org/chart.json")
+    ]);
+
+    const feedText = await feedRes.text();
+    const chartData = await chartRes.json();
+
+    // Extracting latest articles from RSS feed
+    const latestArticles = feedText
+      .match(/<item>([\s\S]*?)<\/item>/g)
+      ?.slice(0, 5)
+      .map(item => {
+        const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || 
+                           item.match(/<title>(.*?)<\/title>/);
+        const linkMatch = item.match(/<link>(.*?)<\/link>/);
+        return titleMatch ? `- ${titleMatch[1]}: ${linkMatch ? linkMatch[1] : ''}` : null;
+      })
+      .filter(Boolean)
+      .join("\n") || "No recent articles found.";
+
+    // Getting the latest gold price from chart data
+    const latestPrice = Array.isArray(chartData) ? chartData[chartData.length - 1] : null;
+    
+    let priceInfo = "স্বর্ণের দামের তথ্য পাওয়া যায়নি।";
+    if (latestPrice) {
+      // Calculate per gram price (assuming the data is per bhori/vola, which is standard in BD)
+      // 1 Bhori = 11.664 grams
+      const perGram22K = (latestPrice.k22 / 11.664).toFixed(2);
+      
+      priceInfo = `সর্বশেষ স্বর্ণের দাম (তারিখ: ${latestPrice.date}):
+- ২২ ক্যারেট: ${latestPrice.k22} টাকা (প্রতি গ্রাম: ${perGram22K} টাকা)
+- ২১ ক্যারেট: ${latestPrice.k21} টাকা
+- ১৮ ক্যারেট: ${latestPrice.k18} টাকা
+- সনাতন (Traditional): ${latestPrice.traditional} টাকা`;
+    }
+
+    return `
+GoldR Recent Updates & BAJUS Notices:
+${latestArticles}
+
+Current Gold Price Context:
+${priceInfo}
+Update Time: ${new Date().toLocaleString('bn-BD')}
+`;
+  } catch (error) {
+    console.error("Error fetching GoldR data:", error);
+    return "GoldR থেকে তথ্য সংগ্রহ করতে সমস্যা হয়েছে। অনুগ্রহ করে ম্যানুয়ালি goldr.org চেক করুন।";
+  }
+}
+
 async function handleChatRequest(
   request: Request,
   env: Env,
@@ -59,22 +111,19 @@ async function handleChatRequest(
       messages: ChatMessage[];
     };
 
-    // Add system prompt if not present
-    if (!messages.some((msg) => msg.role === "system")) {
-      messages.unshift({ role: "system", content: SYSTEM_PROMPT });
+    // Fetch dynamic data from GoldR to provide as context
+    const goldrContext = await fetchGoldRData();
+
+    // Prepare the context-aware system prompt
+    const fullSystemPrompt = `${SYSTEM_PROMPT}\n\nবর্তমান বাজার তথ্য এবং আপডেট:\n${goldrContext}`;
+
+    // Add or update system prompt
+    const systemMsgIndex = messages.findIndex((msg) => msg.role === "system");
+    if (systemMsgIndex !== -1) {
+      messages[systemMsgIndex].content = fullSystemPrompt;
+    } else {
+      messages.unshift({ role: "system", content: fullSystemPrompt });
     }
-
-    // Fetch feed & chart data to provide context
-    const feedRes = await fetch("https://www.goldr.org/feed.xml");
-    const feedText = await feedRes.text();
-    const chartRes = await fetch("https://www.goldr.org/chart.json");
-    const chartText = await chartRes.text();
-
-    // Append GoldR context to the last user message
-    messages.push({
-      role: "system",
-      content: `Context Data:\nFeed:\n${feedText.slice(0, 5000)}\n\nChart:\n${chartText.slice(0, 2000)}`
-    });
 
     const aiResponse = await env.AI.run(
       MODEL_ID,
@@ -91,11 +140,14 @@ async function handleChatRequest(
   } catch (error: any) {
     console.error("Error processing chat request:", error);
     return new Response(
-      JSON.stringify({
-        error: "Failed to process request",
-        details: error.message
+      JSON.stringify({ 
+        error: "Failed to process request", 
+        details: error.message 
       }),
-      { status: 500, headers: { "content-type": "application/json" } },
+      {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      },
     );
   }
 }
